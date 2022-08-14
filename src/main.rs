@@ -4,6 +4,10 @@ use std::{
 };
 
 pub mod lex;
+
+mod number;
+use number::Number;
+
 mod port;
 use port::{current_output_port, Port};
 
@@ -17,8 +21,7 @@ pub enum Object {
     Symbol(Rc<std::string::String>),
     Bytevector(Rc<Vec<u8>>),
     EofObject,
-    Exact(u64),
-    Inexact(f64),
+    Number(Number),
     Port(Port),
     String(Rc<Vec<char>>),
     Vector(Rc<Vec<Object>>),
@@ -77,8 +80,7 @@ fn write_impl(obj: &Object, p: &mut Port) -> Result<(), io::Error> {
             write!(p, ")")?;
         }
         EofObject => write!(p, "<eof>")?,
-        Exact(i) => write!(p, "{}", i)?,
-        Inexact(f) => write!(p, "{}", f)?,
+        Number(x) => write!(p, "{:?}", x)?,
         Port(_) => write!(p, "<port>")?,
         String(s) => {
             for c in s.iter() {
@@ -117,27 +119,26 @@ fn write_cdr(cdr: &Object, p: &mut Port) -> Result<(), io::Error> {
 }
 
 fn main() {
-
     println!("mibph!");
-    println!("eggs? ;_;");
     println!();
     println!(
         "objects are {} bytes in memory.",
         std::mem::size_of::<Object>()
     );
+    println!(
+        "numbers are {} bytes in memory.",
+        std::mem::size_of::<Number>()
+    );
 
-    println!("here is an improper list:");
-    write_simple1(cons(Exact(5), cons(cons(Exact(7), Null), Exact(9))));
     println!();
     println!();
-    println!("ask me to lex some tokens for you:");
 
     for s in std::io::stdin().lines() {
         let s = &s.unwrap();
-        match lex::token(s) {
-            Ok(("", t)) => println!("that is a {t:?} token."),
-            Ok((r, t)) => println!("that is {t:?} token and some extra stuff (\"{r}\")."),
-            Err(e) => println!("that is not a token! {e}"),
+        match lex::lex(s) {
+            Ok(("", ts)) => println!("tokens:\n{ts:?}"),
+            Ok((r, ts)) => println!("tokens:\n{ts:?}\n followed by garbage: \"{r}\"."),
+            Err(e) => println!("not tokens! {e}"),
         };
     }
 }
