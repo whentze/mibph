@@ -31,7 +31,7 @@ pub enum Token {
     CommaAt,
     Period,
 }
-
+// TODO: handle errors
 pub fn lex(i: &str) -> IResult<&str, Vec<Token>> {
     many0(delimited(intertoken_space, token, intertoken_space))(i)
 }
@@ -426,9 +426,9 @@ use Exactness::*;
 
 fn exactness(i: &str) -> IResult<&str, Exactness> {
     alt((
+        value(Unspecified, tag("")),
         value(Inexact, tag("#i")),
         value(Exact, tag("#e")),
-        value(Unspecified, tag("")),
     ))(i)
 }
 
